@@ -53,9 +53,8 @@
 
 Check out the live website deployed on GitHub Pages:
 
-👉 **[https://muhammadshihablbl.github.io/google-icons-to-vector-xml/](https://muhammadshihablbl.github.io/google-icons-to-vector-xml/)**
+👉 **[https://muhammadshihablbl.github.io/google-icons-to-vector-xml/](https://muhammadshihablbl-commits.github.io/google-icons-to-vector-xml/)**
 
-*(Replace with your actual GitHub username if different)*
 
 ---
 
