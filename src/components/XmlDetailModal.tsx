@@ -22,11 +22,7 @@ import {
   Sun,
   Moon,
   Grid,
-  Columns3,
-  Eye,
-  ArrowRight,
 } from 'lucide-react';
-import { SyntaxHighlighter } from './SyntaxHighlighter';
 
 interface XmlDetailModalProps {
   icon: GoogleIconItem | null;
@@ -64,34 +60,6 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
   const [tint, setTint] = useState<string>('');
   const [bgMode, setBgMode] = useState<'light' | 'dark' | 'checker'>('checker');
   const [activeTab, setActiveTab] = useState<'vector' | 'layout' | 'compose' | 'guide'>('vector');
-
-  // Preview Layout: 'all-styles' (Simultaneous side-by-side comparison) vs 'single' (Focused magnified canvas)
-  const [previewLayout, setPreviewLayout] = useState<'all-styles' | 'single'>('all-styles');
-
-  // Mobile Tab for screens < lg: 'preview' (Icon Preview & Customizer) vs 'code' (Vector XML & Snippets)
-  const [mobileTab, setMobileTab] = useState<'preview' | 'code'>('preview');
-
-  // Syntax highlighting theme toggle ('dark' | 'light')
-  const [codeTheme, setCodeTheme] = useState<'dark' | 'light'>(() => {
-    try {
-      const saved = localStorage.getItem('xml_preview_theme');
-      return saved === 'light' ? 'light' : 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-
-  const toggleCodeTheme = () => {
-    setCodeTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try {
-        localStorage.setItem('xml_preview_theme', next);
-      } catch {}
-      return next;
-    });
-  };
-
-  const isDarkCode = codeTheme === 'dark';
 
   const [svgText, setSvgText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -264,16 +232,14 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handleDownloadXml}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
-              title="Download Android Vector XML"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
             >
-              <Download className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">{lang === 'bn' ? 'এক্সএমএল ডাউনলোড' : 'Download XML'}</span>
-              <span className="inline sm:hidden">XML</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>{lang === 'bn' ? 'এক্সএমএল ডাউনলোড' : 'Download XML'}</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 sm:p-2 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-200/70 transition-colors"
+              className="p-1.5 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-200/70 transition-colors"
               title="Close (ESC)"
             >
               <X className="w-5 h-5" />
@@ -281,227 +247,71 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Mobile View Switcher Tab Bar (only visible on mobile screens < lg) */}
-        <div className="flex lg:hidden items-center border-b border-neutral-200 bg-neutral-100/90 p-1.5 shrink-0 gap-1 text-xs">
-          <button
-            onClick={() => setMobileTab('preview')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all ${
-              mobileTab === 'preview'
-                ? 'bg-white text-blue-700 font-semibold shadow-xs'
-                : 'text-neutral-600 hover:text-neutral-900'
-            }`}
-          >
-            <Columns3 className="w-3.5 h-3.5" />
-            <span>{lang === 'bn' ? 'স্টাইল ও প্রিভিউ' : 'Styles & Preview'}</span>
-          </button>
-          <button
-            onClick={() => setMobileTab('code')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all ${
-              mobileTab === 'code'
-                ? 'bg-white text-blue-700 font-semibold shadow-xs'
-                : 'text-neutral-600 hover:text-neutral-900'
-            }`}
-          >
-            <Code2 className="w-3.5 h-3.5" />
-            <span>{lang === 'bn' ? 'Vector XML কোড' : 'XML Code'}</span>
-          </button>
-        </div>
-
         {/* Modal Body: Left controls & Right code viewer */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 overflow-y-auto lg:overflow-hidden">
           {/* Left Column: Interactive Icon Preview & Controls (5 cols) */}
-          <div
-            className={`lg:col-span-5 p-3.5 sm:p-5 border-b lg:border-b-0 lg:border-r border-neutral-200 flex flex-col gap-4 overflow-y-auto bg-neutral-50/40 ${
-              mobileTab === 'preview' ? 'flex' : 'hidden lg:flex'
-            }`}
-          >
-            {/* Canvas Preview Area with Side-by-Side Styles Option */}
-            <div className="relative flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border border-neutral-200 bg-white/60 shadow-xs min-h-[220px]">
-              {/* Top bar inside canvas container: Mode switcher on left & Background switcher on right */}
-              <div className="w-full flex items-center justify-between mb-2.5 pb-2 border-b border-neutral-200/80 gap-1.5">
-                {/* View Layout Toggle: 3 Styles Side-by-Side vs 1 Focused */}
-                <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200 text-neutral-600">
-                  <button
-                    onClick={() => setPreviewLayout('all-styles')}
-                    className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-all ${
-                      previewLayout === 'all-styles'
-                        ? 'bg-white text-blue-600 shadow-2xs font-semibold'
-                        : 'hover:text-neutral-900'
-                    }`}
-                    title={lang === 'bn' ? '৩টি স্টাইল পাশাপাশি দেখুন' : 'Compare 3 styles side-by-side'}
-                  >
-                    <Columns3 className="w-3 h-3" />
-                    <span className="hidden xs:inline sm:inline">
-                      {lang === 'bn' ? '৩টি স্টাইল (পাশাপাশি)' : '3 Styles (Side-by-Side)'}
-                    </span>
-                    <span className="inline xs:hidden sm:hidden">
-                      {lang === 'bn' ? '৩টি স্টাইল' : '3 Styles'}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setPreviewLayout('single')}
-                    className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-all ${
-                      previewLayout === 'single'
-                        ? 'bg-white text-blue-600 shadow-2xs font-semibold'
-                        : 'hover:text-neutral-900'
-                    }`}
-                    title={lang === 'bn' ? 'একটি বড় ফোকাস প্রিভিউ' : 'Single focused preview'}
-                  >
-                    <Eye className="w-3 h-3" />
-                    <span>
-                      {lang === 'bn' ? 'ফোকাস' : 'Single'}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Background mode switcher */}
-                <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200 text-neutral-600">
-                  <button
-                    onClick={() => setBgMode('checker')}
-                    className={`p-1 rounded ${bgMode === 'checker' ? 'bg-white text-blue-600 shadow-2xs' : 'hover:bg-neutral-200/60'}`}
-                    title="Checkerboard (Transparent)"
-                  >
-                    <Grid className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setBgMode('light')}
-                    className={`p-1 rounded ${bgMode === 'light' ? 'bg-white text-blue-600 shadow-2xs' : 'hover:bg-neutral-200/60'}`}
-                    title="Light background"
-                  >
-                    <Sun className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setBgMode('dark')}
-                    className={`p-1 rounded ${bgMode === 'dark' ? 'bg-white text-blue-600 shadow-2xs' : 'hover:bg-neutral-200/60'}`}
-                    title="Dark background"
-                  >
-                    <Moon className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+          <div className="lg:col-span-5 p-5 border-b lg:border-b-0 lg:border-r border-neutral-200 flex flex-col gap-4 overflow-y-auto bg-neutral-50/40">
+            {/* Canvas Preview Area */}
+            <div className="relative flex flex-col items-center justify-center p-6 rounded-xl border border-neutral-200 shadow-xs min-h-[220px]">
+              {/* Background mode switcher */}
+              <div className="absolute top-2.5 right-2.5 flex items-center bg-white/90 backdrop-blur-xs p-0.5 rounded-lg border border-neutral-200 text-neutral-600 shadow-xs">
+                <button
+                  onClick={() => setBgMode('checker')}
+                  className={`p-1 rounded ${bgMode === 'checker' ? 'bg-blue-50 text-blue-600' : 'hover:bg-neutral-100'}`}
+                  title="Checkerboard (Transparent)"
+                >
+                  <Grid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setBgMode('light')}
+                  className={`p-1 rounded ${bgMode === 'light' ? 'bg-blue-50 text-blue-600' : 'hover:bg-neutral-100'}`}
+                  title="Light background"
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setBgMode('dark')}
+                  className={`p-1 rounded ${bgMode === 'dark' ? 'bg-blue-50 text-blue-600' : 'hover:bg-neutral-100'}`}
+                  title="Dark background"
+                >
+                  <Moon className="w-3.5 h-3.5" />
+                </button>
               </div>
 
-              {/* View 1: 3 Styles Side-by-Side Comparison */}
-              {previewLayout === 'all-styles' ? (
-                <div className="w-full flex flex-col gap-2">
-                  <div className="w-full grid grid-cols-3 gap-1.5 sm:gap-2.5">
-                    {(['outlined', 'rounded', 'sharp'] as IconStyle[]).map((s) => {
-                      const isCurrentSelected = style === s;
-                      const fontClass = `material-symbols-${s}`;
-
-                      return (
-                        <div
-                          key={s}
-                          onClick={() => setStyle(s)}
-                          className={`group relative flex flex-col items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
-                            isCurrentSelected
-                              ? 'bg-blue-50/90 border-blue-500 ring-2 ring-blue-500/25 shadow-xs'
-                              : 'bg-white hover:bg-neutral-50/80 border-neutral-200 hover:border-neutral-300 shadow-2xs'
-                          }`}
-                        >
-                          {/* Style Name and Selected Dot */}
-                          <div className="w-full flex items-center justify-between mb-1">
-                            <span
-                              className={`text-[10px] sm:text-[11px] font-bold capitalize truncate ${
-                                isCurrentSelected ? 'text-blue-700' : 'text-neutral-700'
-                              }`}
-                            >
-                              {s}
-                            </span>
-                            {isCurrentSelected ? (
-                              <span className="flex h-2 w-2 relative">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-                              </span>
-                            ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-neutral-300 group-hover:bg-neutral-400" />
-                            )}
-                          </div>
-
-                          {/* Glyph rendering area with chosen background */}
-                          <div
-                            className={`w-full aspect-square rounded-lg flex items-center justify-center transition-all ${
-                              bgMode === 'dark'
-                                ? 'bg-neutral-900 border border-neutral-800'
-                                : bgMode === 'light'
-                                ? 'bg-white border border-neutral-200'
-                                : 'checkerboard-bg border border-neutral-200'
-                            }`}
-                          >
-                            <span
-                              className={`${fontClass} transition-transform group-hover:scale-110 duration-150`}
-                              style={{
-                                fontSize: `${Math.min(Math.max(sizeDp * 1.5, 28), 44)}px`,
-                                color: previewColor,
-                                fontVariationSettings: isFilled ? "'FILL' 1" : "'FILL' 0",
-                              }}
-                            >
-                              {icon.name}
-                            </span>
-                          </div>
-
-                          {/* Bottom Action / Status badge */}
-                          <div className="w-full mt-1.5 text-center">
-                            <span
-                              className={`block w-full py-0.5 px-1 rounded text-[10px] font-medium truncate transition-colors ${
-                                isCurrentSelected
-                                  ? 'bg-blue-600 text-white font-semibold shadow-2xs'
-                                  : 'text-neutral-500 bg-neutral-100 group-hover:bg-blue-50 group-hover:text-blue-700'
-                              }`}
-                            >
-                              {isCurrentSelected
-                                ? (lang === 'bn' ? '✓ সক্রিয়' : '✓ Active')
-                                : (lang === 'bn' ? 'বাছাই' : 'Select')}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+              {/* Icon rendering container */}
+              <div
+                className={`w-40 h-40 rounded-xl flex items-center justify-center transition-all ${
+                  bgMode === 'dark'
+                    ? 'bg-neutral-900 border border-neutral-800'
+                    : bgMode === 'light'
+                    ? 'bg-white border border-neutral-200'
+                    : 'checkerboard-bg border border-neutral-200'
+                }`}
+              >
+                {loading ? (
+                  <div className="flex flex-col items-center gap-2 text-neutral-400">
+                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs">Loading SVG...</span>
                   </div>
-
-                  <div className="text-center mt-1">
-                    <span className="text-[11px] font-mono text-neutral-500">
-                      {sizeDp}dp × {sizeDp}dp | {style} {isFilled ? '(filled)' : '(outlined)'}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                /* View 2: Single Large Focused Preview */
-                <div className="w-full flex flex-col items-center">
-                  <div
-                    className={`w-36 h-36 sm:w-40 sm:h-40 rounded-xl flex items-center justify-center transition-all ${
-                      bgMode === 'dark'
-                        ? 'bg-neutral-900 border border-neutral-800'
-                        : bgMode === 'light'
-                        ? 'bg-white border border-neutral-200'
-                        : 'checkerboard-bg border border-neutral-200'
-                    }`}
+                ) : (
+                  <span
+                    className={`material-symbols-${style} transition-all duration-150`}
+                    style={{
+                      fontSize: `${Math.min(sizeDp * 2.2, 110)}px`,
+                      color: previewColor,
+                      fontVariationSettings: isFilled ? "'FILL' 1" : "'FILL' 0",
+                    }}
                   >
-                    {loading ? (
-                      <div className="flex flex-col items-center gap-2 text-neutral-400">
-                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-xs">Loading SVG...</span>
-                      </div>
-                    ) : (
-                      <span
-                        className={`material-symbols-${style} transition-all duration-150`}
-                        style={{
-                          fontSize: `${Math.min(sizeDp * 2.2, 100)}px`,
-                          color: previewColor,
-                          fontVariationSettings: isFilled ? "'FILL' 1" : "'FILL' 0",
-                        }}
-                      >
-                        {icon.name}
-                      </span>
-                    )}
-                  </div>
+                    {icon.name}
+                  </span>
+                )}
+              </div>
 
-                  <div className="mt-2 text-center">
-                    <span className="text-xs font-mono text-neutral-500">
-                      {sizeDp}dp × {sizeDp}dp | {style} {isFilled ? '(filled)' : '(outlined)'}
-                    </span>
-                  </div>
-                </div>
-              )}
+              <div className="mt-2 text-center">
+                <span className="text-xs font-mono text-neutral-500">
+                  {sizeDp}dp × {sizeDp}dp | {style} {isFilled ? '(filled)' : '(outlined)'}
+                </span>
+              </div>
             </div>
 
             {/* Customization Controls */}
@@ -516,19 +326,13 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
                     <button
                       key={s}
                       onClick={() => setStyle(s)}
-                      className={`py-1.5 px-2 rounded-lg capitalize font-medium border text-center transition-all flex items-center justify-center gap-1.5 ${
+                      className={`py-1.5 px-2 rounded-lg capitalize font-medium border text-center transition-all ${
                         style === s
-                          ? 'bg-blue-50 border-blue-400 text-blue-700 font-semibold shadow-2xs'
+                          ? 'bg-blue-50 border-blue-400 text-blue-700 font-semibold'
                           : 'bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50'
                       }`}
                     >
-                      <span
-                        className={`material-symbols-${s} text-[15px] shrink-0`}
-                        style={{ fontVariationSettings: isFilled ? "'FILL' 1" : "'FILL' 0" }}
-                      >
-                        {icon.name}
-                      </span>
-                      <span>{s}</span>
+                      {s}
                     </button>
                   ))}
                 </div>
@@ -645,43 +449,18 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
                   <span>Download SVG</span>
                 </button>
               </div>
-
-              {/* Mobile button to switch to XML code viewer */}
-              <button
-                onClick={() => setMobileTab('code')}
-                className="lg:hidden w-full py-2.5 px-3 rounded-xl bg-neutral-900 hover:bg-black text-white font-medium text-xs flex items-center justify-center gap-2 transition-colors shadow-xs"
-              >
-                <Code2 className="w-3.5 h-3.5" />
-                <span>{lang === 'bn' ? 'Vector XML কোড ও স্নিপেট দেখুন' : 'View Vector XML Code & Snippets'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
             </div>
           </div>
 
           {/* Right Column: Code & Code Snippets Tabs (7 cols) */}
-          <div
-            className={`lg:col-span-7 flex flex-col min-h-0 transition-colors ${
-              isDarkCode ? 'bg-neutral-900 text-neutral-100' : 'bg-[#f6f8fa] text-neutral-800'
-            } ${mobileTab === 'code' ? 'flex' : 'hidden lg:flex'}`}
-          >
-            {/* Code Tabs Header & Actions */}
-            <div
-              className={`flex items-center justify-between px-3 sm:px-4 py-2 border-b text-xs shrink-0 transition-colors gap-2 ${
-                isDarkCode ? 'bg-neutral-950 border-neutral-800' : 'bg-white border-neutral-200 shadow-2xs'
-              }`}
-            >
-              {/* Scrollable Tabs */}
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 min-w-0">
+          <div className="lg:col-span-7 flex flex-col min-h-0 bg-neutral-900 text-neutral-100">
+            {/* Code Tabs Header */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-950 border-b border-neutral-800 text-xs shrink-0">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => setActiveTab('vector')}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 ${
-                    activeTab === 'vector'
-                      ? isDarkCode
-                        ? 'bg-neutral-800 text-blue-400 font-semibold'
-                        : 'bg-blue-50 text-blue-700 font-semibold border border-blue-200 shadow-2xs'
-                      : isDarkCode
-                      ? 'text-neutral-400 hover:text-neutral-200'
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'vector' ? 'bg-neutral-800 text-blue-400 font-semibold' : 'text-neutral-400 hover:text-neutral-200'
                   }`}
                 >
                   <Code2 className="w-3.5 h-3.5" />
@@ -689,109 +468,54 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
                 </button>
                 <button
                   onClick={() => setActiveTab('layout')}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 ${
-                    activeTab === 'layout'
-                      ? isDarkCode
-                        ? 'bg-neutral-800 text-blue-400 font-semibold'
-                        : 'bg-blue-50 text-blue-700 font-semibold border border-blue-200 shadow-2xs'
-                      : isDarkCode
-                      ? 'text-neutral-400 hover:text-neutral-200'
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'layout' ? 'bg-neutral-800 text-blue-400 font-semibold' : 'text-neutral-400 hover:text-neutral-200'
                   }`}
                 >
                   <span>XML Layout</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('compose')}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 ${
-                    activeTab === 'compose'
-                      ? isDarkCode
-                        ? 'bg-neutral-800 text-blue-400 font-semibold'
-                        : 'bg-blue-50 text-blue-700 font-semibold border border-blue-200 shadow-2xs'
-                      : isDarkCode
-                      ? 'text-neutral-400 hover:text-neutral-200'
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'compose' ? 'bg-neutral-800 text-blue-400 font-semibold' : 'text-neutral-400 hover:text-neutral-200'
                   }`}
                 >
-                  <span>Compose</span>
+                  <span>Jetpack Compose</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('guide')}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 ${
-                    activeTab === 'guide'
-                      ? isDarkCode
-                        ? 'bg-neutral-800 text-blue-400 font-semibold'
-                        : 'bg-blue-50 text-blue-700 font-semibold border border-blue-200 shadow-2xs'
-                      : isDarkCode
-                      ? 'text-neutral-400 hover:text-neutral-200'
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'guide' ? 'bg-neutral-800 text-blue-400 font-semibold' : 'text-neutral-400 hover:text-neutral-200'
                   }`}
                 >
                   <Info className="w-3.5 h-3.5" />
-                  <span>{lang === 'bn' ? 'গাইড' : 'Guide'}</span>
+                  <span>{lang === 'bn' ? 'ব্যবহার গাইড' : 'Android Guide'}</span>
                 </button>
               </div>
 
-              {/* Code Actions Toolbar */}
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Syntax Highlighting Light/Dark Mode Toggle */}
-                <button
-                  onClick={toggleCodeTheme}
-                  className={`flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium border transition-all ${
-                    isDarkCode
-                      ? 'bg-neutral-800/90 hover:bg-neutral-700 text-amber-300 border-neutral-700'
-                      : 'bg-white hover:bg-neutral-100 text-neutral-700 border-neutral-200 shadow-2xs'
-                  }`}
-                  title={
-                    isDarkCode
-                      ? (lang === 'bn' ? 'লাইট সিনট্যাক্স হাইলাইটিংয়ে পরিবর্তন করুন' : 'Switch to Light syntax mode')
-                      : (lang === 'bn' ? 'ডার্ক সিনট্যাক্স হাইলাইটিংয়ে পরিবর্তন করুন' : 'Switch to Dark syntax mode')
-                  }
-                  aria-label="Toggle code syntax highlighting theme"
-                >
-                  {isDarkCode ? (
-                    <>
-                      <Sun className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                      <span className="hidden sm:inline font-mono text-[11px]">Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-3.5 h-3.5 text-neutral-600 shrink-0" />
-                      <span className="hidden sm:inline font-mono text-[11px]">Dark</span>
-                    </>
-                  )}
-                </button>
-
+              {/* Code Actions */}
+              <div className="flex items-center gap-2">
                 {activeTab === 'vector' && (
                   <button
                     onClick={handleCopyPath}
-                    className={`hidden sm:inline-block px-2 py-1 text-[11px] font-mono rounded transition-colors ${
-                      isDarkCode
-                        ? 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border border-neutral-200'
-                    }`}
+                    className="px-2 py-1 text-[11px] font-mono text-neutral-400 hover:text-neutral-200 rounded hover:bg-neutral-800 transition-colors"
                     title="Copy pathData attribute only"
                   >
                     {copiedPath ? 'Path Copied!' : 'Copy pathData'}
                   </button>
                 )}
-
                 <button
                   onClick={() => {
                     if (activeTab === 'vector') handleCopyCode();
                     else if (activeTab === 'layout') handleCopySnippet(snippets.xmlLayout);
                     else if (activeTab === 'compose') handleCopySnippet(snippets.jetpackCompose);
                   }}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium text-xs transition-colors ${
-                    isDarkCode
-                      ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700'
-                      : 'bg-neutral-900 hover:bg-black text-white shadow-xs'
-                  }`}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium text-xs transition-colors"
                 >
                   {copiedCode || copiedSnippet ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className={isDarkCode ? 'text-emerald-400' : 'text-emerald-300'}>Copied!</span>
+                      <span className="text-emerald-400">Copied!</span>
                     </>
                   ) : (
                     <>
@@ -804,67 +528,50 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
             </div>
 
             {/* Code Content Area */}
-            <div className="flex-1 p-3 sm:p-4 overflow-y-auto font-mono text-xs leading-relaxed select-text">
+            <div className="flex-1 p-4 overflow-y-auto font-mono text-xs leading-relaxed select-text">
               {activeTab === 'vector' && (
                 <div className="relative">
-                  <SyntaxHighlighter
-                    code={vectorXml}
-                    language="xml"
-                    isDark={isDarkCode}
-                    showLineNumbers={true}
-                  />
+                  <pre className="text-neutral-300 font-mono whitespace-pre overflow-x-auto p-2">
+                    <code>{vectorXml}</code>
+                  </pre>
                 </div>
               )}
 
               {activeTab === 'layout' && (
-                <div className="space-y-3 font-sans">
-                  <p className={`text-xs ${isDarkCode ? 'text-neutral-400' : 'text-neutral-600'}`}>
+                <div className="space-y-4">
+                  <p className="text-neutral-400 font-sans text-xs">
                     {lang === 'bn'
                       ? 'অ্যান্ড্রয়েড XML লেআউট ফাইলে (যেমন activity_main.xml) এই ImageView কোড ব্যবহার করুন:'
                       : 'Paste this snippet in your Android XML Layout file (e.g. res/layout/activity_main.xml):'}
                   </p>
-                  <SyntaxHighlighter
-                    code={snippets.xmlLayout}
-                    language="xml"
-                    isDark={isDarkCode}
-                    showLineNumbers={false}
-                  />
+                  <pre className="bg-neutral-950 p-3 rounded-lg text-blue-300 overflow-x-auto">
+                    <code>{snippets.xmlLayout}</code>
+                  </pre>
                 </div>
               )}
 
               {activeTab === 'compose' && (
-                <div className="space-y-3 font-sans">
-                  <p className={`text-xs ${isDarkCode ? 'text-neutral-400' : 'text-neutral-600'}`}>
+                <div className="space-y-4">
+                  <p className="text-neutral-400 font-sans text-xs">
                     {lang === 'bn'
                       ? 'Jetpack Compose-এ এই আইকনটি ব্যবহার করতে Kotlin ফাইলে লিখুন:'
                       : 'Use this snippet in your Jetpack Compose Kotlin UI code:'}
                   </p>
-                  <SyntaxHighlighter
-                    code={snippets.jetpackCompose}
-                    language="kotlin"
-                    isDark={isDarkCode}
-                    showLineNumbers={false}
-                  />
+                  <pre className="bg-neutral-950 p-3 rounded-lg text-emerald-300 overflow-x-auto">
+                    <code>{snippets.jetpackCompose}</code>
+                  </pre>
                 </div>
               )}
 
               {activeTab === 'guide' && (
-                <div
-                  className={`space-y-4 font-sans text-xs ${
-                    isDarkCode ? 'text-neutral-300' : 'text-neutral-700'
-                  }`}
-                >
-                  <h3
-                    className={`text-sm font-semibold ${
-                      isDarkCode ? 'text-white' : 'text-neutral-900'
-                    }`}
-                  >
+                <div className="space-y-4 font-sans text-xs text-neutral-300">
+                  <h3 className="text-sm font-semibold text-white">
                     {lang === 'bn' ? 'অ্যান্ড্রয়েড স্টুডিওতে ব্যবহারের নিয়ম:' : 'How to use in Android Studio:'}
                   </h3>
 
-                  <ol className="list-decimal list-inside space-y-2.5">
+                  <ol className="list-decimal list-inside space-y-2.5 text-neutral-300">
                     <li>
-                      <strong className={isDarkCode ? 'text-white' : 'text-neutral-900'}>
+                      <strong className="text-white">
                         {lang === 'bn' ? 'ফাইল ডাউনলোড করুন:' : '1. Download the XML file:'}
                       </strong>{' '}
                       {lang === 'bn'
@@ -872,7 +579,7 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
                         : `Click "Download XML" to get "${drawableName}.xml".`}
                     </li>
                     <li>
-                      <strong className={isDarkCode ? 'text-white' : 'text-neutral-900'}>
+                      <strong className="text-white">
                         {lang === 'bn' ? 'drawable ফোল্ডারে পেস্ট করুন:' : '2. Place in drawable folder:'}
                       </strong>{' '}
                       {lang === 'bn'
@@ -880,7 +587,7 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
                         : 'Copy the file into your Android Studio project at `app/src/main/res/drawable/`.'}
                     </li>
                     <li>
-                      <strong className={isDarkCode ? 'text-white' : 'text-neutral-900'}>
+                      <strong className="text-white">
                         {lang === 'bn' ? 'লেআউটে ব্যবহার করুন:' : '3. Reference in UI:'}
                       </strong>{' '}
                       {lang === 'bn'
@@ -889,24 +596,12 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
                     </li>
                   </ol>
 
-                  <div
-                    className={`p-3 rounded-lg border space-y-1 ${
-                      isDarkCode
-                        ? 'bg-blue-950/40 border-blue-800/60 text-blue-200'
-                        : 'bg-blue-50 border-blue-200 text-blue-900'
-                    }`}
-                  >
+                  <div className="p-3 bg-blue-950/40 border border-blue-800/60 rounded-lg text-blue-200 space-y-1">
                     <p className="font-semibold flex items-center gap-1.5">
-                      <Sparkles
-                        className={`w-3.5 h-3.5 ${isDarkCode ? 'text-blue-400' : 'text-blue-600'}`}
-                      />
+                      <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                       {lang === 'bn' ? 'কেন ভেক্টর এক্সএমএল (Vector XML)?' : 'Why Vector XML?'}
                     </p>
-                    <p
-                      className={`text-[11px] leading-relaxed ${
-                        isDarkCode ? 'text-blue-300' : 'text-blue-800'
-                      }`}
-                    >
+                    <p className="text-[11px] text-blue-300">
                       {lang === 'bn'
                         ? 'ভেক্টর এক্সএমএল ফাইলগুলো যে কোনো স্ক্রিন সাইজে (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi) ফেটে না গিয়ে ক্রিস্প থাকে এবং APK-এর সাইজ অনেক কমিয়ে রাখে।'
                         : 'VectorDrawables scale losslessly to any Android device resolution (mdpi to xxxhdpi) without blurriness, keeping your APK size minimal.'}
@@ -917,13 +612,7 @@ export const XmlDetailModal: React.FC<XmlDetailModalProps> = ({
             </div>
 
             {/* Bottom status line */}
-            <div
-              className={`px-4 py-2 border-t text-[11px] flex items-center justify-between shrink-0 transition-colors ${
-                isDarkCode
-                  ? 'bg-neutral-950 border-neutral-800 text-neutral-500'
-                  : 'bg-white border-neutral-200 text-neutral-500'
-              }`}
-            >
+            <div className="px-4 py-2 bg-neutral-950 border-t border-neutral-800 text-[11px] text-neutral-500 flex items-center justify-between shrink-0">
               <span>Standard Android VectorDrawable XML</span>
               <span>API 21+ Compatible</span>
             </div>

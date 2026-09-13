@@ -84,21 +84,19 @@ export const IconCard: React.FC<IconCardProps> = ({
           : 'bg-white hover:bg-neutral-50/80 border-neutral-200 hover:border-blue-300 hover:shadow-xs'
       }`}
     >
-      {/* Checkbox for batch selection with enlarged touch target */}
+      {/* Checkbox for batch selection */}
       <div
-        className="absolute top-1.5 left-1.5 z-10 p-2 rounded-lg hover:bg-neutral-100/80 transition-colors cursor-pointer"
+        className="absolute top-2.5 left-2.5 z-10"
         onClick={(e) => {
           e.stopPropagation();
           onToggleSelect(icon.name);
         }}
-        role="button"
-        aria-label={`Select ${icon.name}`}
       >
         <input
           type="checkbox"
           checked={isSelected}
           onChange={() => {}}
-          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-neutral-300 cursor-pointer pointer-events-none transition-opacity group-hover:opacity-100 opacity-70 data-checked:opacity-100"
+          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-neutral-300 cursor-pointer transition-opacity group-hover:opacity-100 opacity-60 data-checked:opacity-100"
         />
       </div>
 
