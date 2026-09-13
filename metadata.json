@@ -1,6 +1,6 @@
 {
   "name": "Google Icons to Vector XML",
-  "description": "Google Material Icons library with instant search, Android Vector XML code generation, and one-click XML download.",
+  "description": "Google Material Icons library with instant search, custom SVG to Vector XML converter, reverse Vector XML inspector, and one-click Android Studio exports.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
