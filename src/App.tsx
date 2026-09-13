@@ -35,6 +35,41 @@ export default function App() {
   // Language: 'bn' (Bengali) by default since user asked in Bengali, with English toggle
   const [lang, setLang] = useState<'en' | 'bn'>('bn');
 
+  // Dark Mode State
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    // Check localStorage first
+    const stored = localStorage.getItem('theme-mode');
+    if (stored) {
+      return stored === 'dark';
+    }
+    // Check system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Apply dark mode to document
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme-mode', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  // Listen to system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      const stored = localStorage.getItem('theme-mode');
+      if (!stored) {
+        setIsDarkMode(e.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   // Fetch icons metadata on load
   const loadIcons = async () => {
     setLoading(true);
@@ -119,142 +154,152 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50 text-neutral-900 selection:bg-blue-100 selection:text-blue-900">
-      {/* Sticky Header */}
-      <Header
-        style={style}
-        onStyleChange={setStyle}
-        isFilled={isFilled}
-        onFilledChange={setIsFilled}
-        selectedCount={selectedNames.size}
-        onOpenBatchModal={() => setIsBatchModalOpen(true)}
-        onOpenHelp={() => setIsHelpModalOpen(true)}
-        onOpenDevTools={(tab) => {
-          setDevToolsTab(tab);
-          setIsDevToolsOpen(true);
-        }}
-        totalIcons={icons.length}
-        lang={lang}
-        onToggleLang={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-      />
-
-      {/* Main Search and Filtering Area */}
-      <SearchBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        categories={categories}
-        totalResults={filteredIcons.length}
-        totalIcons={icons.length}
-        style={style}
-        onStyleChange={setStyle}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-        lang={lang}
-      />
-
-      {/* Content Area */}
-      <main className="flex-1 flex flex-col">
-        {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-24 gap-3">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-            <p className="text-sm font-medium text-neutral-600">
-              {lang === 'bn' ? 'গুগল আইকন লাইব্রেরি লোড হচ্ছে...' : 'Loading Google Icons library...'}
-            </p>
-          </div>
-        ) : error ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mb-3">
-              <AlertCircle className="w-7 h-7" />
-            </div>
-            <h3 className="text-base font-bold text-neutral-800 mb-1">
-              {lang === 'bn' ? 'আইকন লোড করতে সমস্যা হয়েছে' : 'Failed to load icons'}
-            </h3>
-            <p className="text-xs text-neutral-500 max-w-sm mb-4">{error}</p>
-            <button
-              onClick={loadIcons}
-              className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-black text-white rounded-xl text-xs font-semibold transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>{lang === 'bn' ? 'আবার চেষ্টা করুন' : 'Retry'}</span>
-            </button>
-          </div>
-        ) : (
-          <IconGrid
-            icons={filteredIcons}
-            style={style}
-            isFilled={isFilled}
-            selectedNames={selectedNames}
-            onToggleSelect={handleToggleSelect}
-            onSelectAllFiltered={handleSelectAllFiltered}
-            onDeselectAll={handleDeselectAll}
-            onSelectIcon={(icon) => setInspectingIcon(icon)}
-            searchQuery={searchQuery}
-            onClearSearch={() => {
-              setSearchQuery('');
-              setSelectedCategory('all');
-            }}
-            lang={lang}
-          />
-        )}
-      </main>
-
-      {/* Floating Bottom Batch Action Bar */}
-      <BatchActionBar
-        selectedCount={selectedNames.size}
-        onOpenBatchModal={() => setIsBatchModalOpen(true)}
-        onClearSelection={handleDeselectAll}
-        lang={lang}
-      />
-
-      {/* Vector XML Inspector Modal */}
-      {inspectingIcon && (
-        <XmlDetailModal
-          icon={inspectingIcon}
+    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'dark' : ''}`}>
+      <div className="min-h-screen flex flex-col bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100">
+        {/* Sticky Header */}
+        <Header
           style={style}
+          onStyleChange={setStyle}
           isFilled={isFilled}
-          onClose={() => setInspectingIcon(null)}
+          onFilledChange={setIsFilled}
+          selectedCount={selectedNames.size}
+          onOpenBatchModal={() => setIsBatchModalOpen(true)}
+          onOpenHelp={() => setIsHelpModalOpen(true)}
+          onOpenDevTools={(tab) => {
+            setDevToolsTab(tab);
+            setIsDevToolsOpen(true);
+          }}
+          totalIcons={icons.length}
           lang={lang}
+          onToggleLang={() => setLang(lang === 'bn' ? 'en' : 'bn')}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         />
-      )}
 
-      {/* Batch Export Modal */}
-      {isBatchModalOpen && (
-        <BatchDownloadModal
-          selectedNames={Array.from(selectedNames)}
-          allIcons={icons}
+        {/* Main Search and Filtering Area */}
+        <SearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          categories={categories}
+          totalResults={filteredIcons.length}
+          totalIcons={icons.length}
           style={style}
-          isFilled={isFilled}
-          onClose={() => setIsBatchModalOpen(false)}
+          onStyleChange={setStyle}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          lang={lang}
+          isDarkMode={isDarkMode}
+        />
+
+        {/* Content Area */}
+        <main className="flex-1 flex flex-col">
+          {loading ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-24 gap-3">
+              <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+              <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                {lang === 'bn' ? 'গুগল আইকন লাইব্রেরি লোড হচ্ছে...' : 'Loading Google Icons library...'}
+              </p>
+            </div>
+          ) : error ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center mb-3">
+                <AlertCircle className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-200 mb-1">
+                {lang === 'bn' ? 'আইকন লোড করতে সমস্যা হয়েছে' : 'Failed to load icons'}
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mb-4">{error}</p>
+              <button
+                onClick={loadIcons}
+                className="flex items-center gap-2 px-4 py-2 bg-neutral-900 dark:bg-neutral-100 hover:bg-black dark:hover:bg-white text-white dark:text-neutral-900 rounded-xl text-xs font-semibold transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>{lang === 'bn' ? 'আবার চেষ্টা করুন' : 'Retry'}</span>
+              </button>
+            </div>
+          ) : (
+            <IconGrid
+              icons={filteredIcons}
+              style={style}
+              isFilled={isFilled}
+              selectedNames={selectedNames}
+              onToggleSelect={handleToggleSelect}
+              onSelectAllFiltered={handleSelectAllFiltered}
+              onDeselectAll={handleDeselectAll}
+              onSelectIcon={(icon) => setInspectingIcon(icon)}
+              searchQuery={searchQuery}
+              onClearSearch={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+              }}
+              lang={lang}
+              isDarkMode={isDarkMode}
+            />
+          )}
+        </main>
+
+        {/* Floating Bottom Batch Action Bar */}
+        <BatchActionBar
+          selectedCount={selectedNames.size}
+          onOpenBatchModal={() => setIsBatchModalOpen(true)}
           onClearSelection={handleDeselectAll}
           lang={lang}
+          isDarkMode={isDarkMode}
         />
-      )}
 
-      {/* Help Modal */}
-      {isHelpModalOpen && <HelpModal onClose={() => setIsHelpModalOpen(false)} lang={lang} />}
+        {/* Vector XML Inspector Modal */}
+        {inspectingIcon && (
+          <XmlDetailModal
+            icon={inspectingIcon}
+            style={style}
+            isFilled={isFilled}
+            onClose={() => setInspectingIcon(null)}
+            lang={lang}
+            isDarkMode={isDarkMode}
+          />
+        )}
 
-      {/* DevTools Toolbox Modal (1. Custom SVG to XML & 5. Reverse Vector XML Inspector) */}
-      {isDevToolsOpen && (
-        <DevToolsModal
-          initialTab={devToolsTab}
-          onClose={() => setIsDevToolsOpen(false)}
-          lang={lang}
-        />
-      )}
+        {/* Batch Export Modal */}
+        {isBatchModalOpen && (
+          <BatchDownloadModal
+            selectedNames={Array.from(selectedNames)}
+            allIcons={icons}
+            style={style}
+            isFilled={isFilled}
+            onClose={() => setIsBatchModalOpen(false)}
+            onClearSelection={handleDeselectAll}
+            lang={lang}
+            isDarkMode={isDarkMode}
+          />
+        )}
 
-      {/* Footer */}
-      <footer className="border-t border-neutral-200 bg-white py-6 px-4 text-center text-xs text-neutral-500 space-y-1.5">
-        <p>
-          {lang === 'bn'
-            ? 'সকল আইকন fonts.google.com/icons (Google Material Symbols) থেকে সরাসরি সংগৃহীত এবং Apache 2.0 লাইসেন্সপ্রাপ্ত।'
-            : 'All icons sourced directly from fonts.google.com/icons (Google Material Symbols) under Apache License 2.0.'}
-        </p>
-        <p className="text-neutral-400 text-[11px]">
-          Android VectorDrawable XML is fully compatible with Android Studio, Jetpack Compose, and Android API 21+.
-        </p>
-      </footer>
+        {/* Help Modal */}
+        {isHelpModalOpen && <HelpModal onClose={() => setIsHelpModalOpen(false)} lang={lang} isDarkMode={isDarkMode} />}
+
+        {/* DevTools Toolbox Modal (1. Custom SVG to XML & 5. Reverse Vector XML Inspector) */}
+        {isDevToolsOpen && (
+          <DevToolsModal
+            initialTab={devToolsTab}
+            onClose={() => setIsDevToolsOpen(false)}
+            lang={lang}
+            isDarkMode={isDarkMode}
+          />
+        )}
+
+        {/* Footer */}
+        <footer className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-6 px-4 text-center text-xs text-neutral-500 dark:text-neutral-400 space-y-1.5">
+          <p>
+            {lang === 'bn'
+              ? 'সকল আইকন fonts.google.com/icons (Google Material Symbols) থেকে সরাসরি সংগৃহীত এবং Apache 2.0 লাইসেন্সের অধীন।'
+              : 'All icons sourced directly from fonts.google.com/icons (Google Material Symbols) under Apache License 2.0.'}
+          </p>
+          <p className="text-neutral-400 dark:text-neutral-600 text-[11px]">
+            Android VectorDrawable XML is fully compatible with Android Studio, Jetpack Compose, and Android API 21+.
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
