@@ -5,6 +5,7 @@
   --font-mono: "JetBrains Mono", monospace;
 }
 
+/* Material Symbols Fonts */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;
@@ -50,7 +51,7 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom checkerboard background for transparent icon preview */
+/* Custom checkerboard background for transparent icon preview - Light Mode */
 .checkerboard-bg {
   background-color: #f8fafc;
   background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
@@ -61,6 +62,7 @@
   background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
 }
 
+/* Custom checkerboard background for transparent icon preview - Dark Mode */
 .checkerboard-dark {
   background-color: #1e293b;
   background-image: linear-gradient(45deg, #0f172a 25%, transparent 25%),
@@ -69,4 +71,86 @@
     linear-gradient(-45deg, transparent 75%, #0f172a 75%);
   background-size: 16px 16px;
   background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+}
+
+/* Smooth transitions for dark mode */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    @apply transition-colors duration-200;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  body {
+    /* Prevent font scaling on landscape orientation on mobile */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Optimize touch targets to 44px minimum */
+  button, a, input, select, textarea {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Better mobile scrolling */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent double-tap zoom delay on touch */
+  input, button, select, textarea, a {
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Improve scrollbar appearance in dark mode */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #18181b;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #52525b;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #71717a;
+  }
+}
+
+/* Light mode scrollbar */
+@media (prefers-color-scheme: light) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f5f5f5;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+}
+
+/* Ensure proper rendering on high-DPI displays */
+@media (min-resolution: 2dppx) {
+  * {
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
