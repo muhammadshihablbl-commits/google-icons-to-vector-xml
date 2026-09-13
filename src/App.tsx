@@ -37,7 +37,8 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/data/icons.json');
+      const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+      const res = await fetch(`${baseUrl}data/icons.json`);
       if (!res.ok) {
         throw new Error(`Failed to load icons metadata (Status: ${res.status})`);
       }
