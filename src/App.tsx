@@ -43,7 +43,10 @@ export default function App() {
       return stored === 'dark';
     }
     // Check system preference
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
   });
 
   // Apply dark mode to document
@@ -59,6 +62,8 @@ export default function App() {
 
   // Listen to system theme changes
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
       const stored = localStorage.getItem('theme-mode');
@@ -66,8 +71,17 @@ export default function App() {
         setIsDarkMode(e.matches);
       }
     };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    
+    // Modern API
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    // Legacy API
+    else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
   }, []);
 
   // Fetch icons metadata on load
