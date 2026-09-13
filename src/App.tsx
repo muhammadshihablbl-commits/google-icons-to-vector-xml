@@ -7,7 +7,6 @@ import { XmlDetailModal } from './components/XmlDetailModal';
 import { BatchDownloadModal } from './components/BatchDownloadModal';
 import { BatchActionBar } from './components/BatchActionBar';
 import { HelpModal } from './components/HelpModal';
-import { DevToolsModal } from './components/DevToolsModal';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -29,8 +28,6 @@ export default function App() {
   const [inspectingIcon, setInspectingIcon] = useState<GoogleIconItem | null>(null);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState<boolean>(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
-  const [isDevToolsOpen, setIsDevToolsOpen] = useState<boolean>(false);
-  const [devToolsTab, setDevToolsTab] = useState<'svg-to-xml' | 'xml-inspector'>('svg-to-xml');
 
   // Language: 'bn' (Bengali) by default since user asked in Bengali, with English toggle
   const [lang, setLang] = useState<'en' | 'bn'>('bn');
@@ -129,10 +126,6 @@ export default function App() {
         selectedCount={selectedNames.size}
         onOpenBatchModal={() => setIsBatchModalOpen(true)}
         onOpenHelp={() => setIsHelpModalOpen(true)}
-        onOpenDevTools={(tab) => {
-          setDevToolsTab(tab);
-          setIsDevToolsOpen(true);
-        }}
         totalIcons={icons.length}
         lang={lang}
         onToggleLang={() => setLang(lang === 'bn' ? 'en' : 'bn')}
@@ -234,15 +227,6 @@ export default function App() {
 
       {/* Help Modal */}
       {isHelpModalOpen && <HelpModal onClose={() => setIsHelpModalOpen(false)} lang={lang} />}
-
-      {/* DevTools Toolbox Modal (1. Custom SVG to XML & 5. Reverse Vector XML Inspector) */}
-      {isDevToolsOpen && (
-        <DevToolsModal
-          initialTab={devToolsTab}
-          onClose={() => setIsDevToolsOpen(false)}
-          lang={lang}
-        />
-      )}
 
       {/* Footer */}
       <footer className="border-t border-neutral-200 bg-white py-6 px-4 text-center text-xs text-neutral-500 space-y-1.5">
